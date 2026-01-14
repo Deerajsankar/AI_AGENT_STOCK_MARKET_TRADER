@@ -46,6 +46,9 @@ AI_AGENT_STOCK_MARKET_TRADER
 ├── portfolio_Guest.json    # 💾 User Database (Auto-generated)
 ├── README.md               # 📖 Project Documentation
 └── __pycache__/            # ⚙️ Python Cache Files
+```
+
+---
 
 ## 🚀 Key Features
 
@@ -79,7 +82,6 @@ def is_market_open():
 - The Agent bases its "Buy/Sell" verdict on *this specific document*.
 
 ---
-
 ## 🛠️ Installation & Setup
 
 **1. Clone the Repository**
