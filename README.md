@@ -36,21 +36,16 @@ The Agent operates on a cognitive **Perceive-Reason-Act** loop:
 
 ## 📂 Project Structure
 
-The project follows a modular "Source Folder" structure to separate core logic from configuration.
+The project uses a flat directory structure for simplicity and easy deployment.
 
 ```text
-F:\Agentic_RAG_Module1\
-├── AI_AGENT\                   # 🧠 Core Source Code
-│   ├── app.py                  # Frontend Orchestrator (Streamlit)
-│   ├── portfolio_manager.py    # Backend Logic (Ledger & State Management)
-│   ├── portfolio_Deeraj.json   # Auto-generated User Database
-│   └── portfolio_Virat.json    # Auto-generated User Database
-├── requirements.txt            # Dependency Management
-├── .gitignore                  # Git Configuration
-└── README.md                   # Project Documentation
-```
-
----
+AI_AGENT_STOCK_MARKET_TRADER
+├── app.py                  # 🧠 Frontend Orchestrator (Streamlit UI)
+├── portfolio_manager.py    # ✋ Backend Logic (Ledger & State Management)
+├── portfolio_deeraj.json   # 💾 User Database (Auto-generated)
+├── portfolio_Guest.json    # 💾 User Database (Auto-generated)
+├── README.md               # 📖 Project Documentation
+└── __pycache__/            # ⚙️ Python Cache Files
 
 ## 🚀 Key Features
 
@@ -93,12 +88,7 @@ git clone [https://github.com/YOUR_USERNAME/Agentic_RAG_Trader.git](https://gith
 cd Agentic_RAG_Trader
 ```
 
-**2. Install Dependencies**
-```bash
-pip install -r requirements.txt
-```
-
-**3. Run the Application**
+**2. Run the Application**
 > ⚠️ **Important:** You must navigate into the `AI_AGENT` folder first!
 ```bash
 cd AI_AGENT
