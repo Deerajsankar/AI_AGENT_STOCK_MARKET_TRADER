@@ -1,4 +1,4 @@
-# 🤖 Agentic RAG: Stock Analyst & Autonomous Trader
+# AI Financial Agent: Autonomous Analyst & Trader
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Frontend-Streamlit-red)
