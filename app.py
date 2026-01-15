@@ -26,18 +26,31 @@ initial_cash = st.sidebar.number_input(
     step=1000
 )
 
-# Manage Session State for User Switching
+# --- CRITICAL FIX: Smart Session Management ---
+# Initialize trackers if they don't exist
 if 'current_user' not in st.session_state:
     st.session_state.current_user = user_id
+if 'current_cash' not in st.session_state:
+    st.session_state.current_cash = initial_cash
 
-if st.session_state.current_user != user_id:
+# CHECK: Has the User OR the Cash changed?
+user_changed = (st.session_state.current_user != user_id)
+cash_changed = (st.session_state.current_cash != initial_cash)
+
+if user_changed or cash_changed:
+    # Update state trackers
     st.session_state.current_user = user_id
+    st.session_state.current_cash = initial_cash
+    
+    # 💥 RESET EVERYTHING: Wipe old data to prevent bugs
     if 'manager' in st.session_state:
         del st.session_state.manager 
     if 'market_data' in st.session_state:
         del st.session_state.market_data
+    if 'analysis_done' in st.session_state:
+        del st.session_state.analysis_done
 
-# Initialize Wallet
+# Initialize Wallet (This runs if we just deleted the old manager)
 if 'manager' not in st.session_state:
     st.session_state.manager = PortfolioManager(user_id, initial_cash)
 
@@ -45,9 +58,9 @@ if 'manager' not in st.session_state:
 # 2. PROFESSIONAL RAG PIPELINE
 # ==========================================
 
-@st.cache_resource
 def initialize_vector_db(uploaded_file):
     if not uploaded_file: return None
+    
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
         tmp_file.write(uploaded_file.read())
         tmp_path = tmp_file.name
@@ -65,13 +78,20 @@ def initialize_vector_db(uploaded_file):
 
 def retrieve_strategy_rules(vector_db, query):
     if not vector_db: return "No Knowledge Base found.", 25 
+    
     docs = vector_db.similarity_search(query, k=2)
     context_text = " ".join([d.page_content for d in docs])
     
+    # Simple logic to extract P/E limit
     pe_limit = 25
     lower_context = context_text.lower()
-    if "150" in lower_context or "growth" in lower_context: pe_limit = 150
-    elif "conservative" in lower_context: pe_limit = 15
+    
+    if "150" in lower_context or "growth" in lower_context: 
+        pe_limit = 150
+    elif "conservative" in lower_context: 
+        pe_limit = 20 
+    elif "20" in lower_context:
+        pe_limit = 20
         
     return context_text, pe_limit
 
@@ -97,17 +117,14 @@ def tool_get_stock_data(ticker):
 st.sidebar.markdown("---")
 st.sidebar.title("💼 Portfolio Dashboard")
 
-# --- IMPROVED SIDEBAR DISPLAY ---
-# 1. Cash Balance (Big Number)
+# --- SIDEBAR DISPLAY ---
 current_cash = st.session_state.manager.portfolio["cash"]
 st.sidebar.metric("💰 Available Cash", f"${current_cash:,.2f}")
 
-# 2. Holdings Section (Dynamic List)
 st.sidebar.subheader("🎒 My Holdings")
 holdings = st.session_state.manager.portfolio["holdings"]
 
 if holdings:
-    # Loop through the dictionary and create a mini-card for each stock
     for ticker, qty in holdings.items():
         st.sidebar.info(f"**{ticker}**: {qty} Shares")
 else:
@@ -120,19 +137,19 @@ uploaded_pdf = st.sidebar.file_uploader("Upload Strategy PDF", type="pdf")
 
 vector_db = None
 if uploaded_pdf:
-    with st.sidebar.spinner("Ingesting Knowledge..."):
+    with st.spinner("Ingesting Knowledge..."):
         vector_db = initialize_vector_db(uploaded_pdf)
     st.sidebar.success("✅ Brain Updated")
 
 # --- MAIN PAGE ---
-st.title("🤖 AI Agent : Stock Analyst & Trader")
+st.title("🤖 AI Financial Agent: Analyst & Trader")
 st.markdown("I Analyze stocks using your PDF strategy and **Trade** them using your Virtual Wallet.")
 
 # INPUT
 col1, col2 = st.columns([2, 1])
 ticker = col1.text_input("Enter Ticker (e.g., AAPL, TSLA):", "TSLA")
 
-# --- CORE FIX: Store Data in Session State ---
+# BUTTON: Run Analysis
 if col1.button("Run Analysis"):
     with st.spinner("Analyzing Market & Strategy..."):
         data = tool_get_stock_data(ticker)
@@ -142,8 +159,14 @@ if col1.button("Run Analysis"):
         else:
             st.error("Ticker not found.")
 
-# Display Results if Analysis was run (Persists across reloads)
+# RESULTS DISPLAY (Safe from Crashing)
 if 'analysis_done' in st.session_state and st.session_state.analysis_done:
+    
+    # Safety Check: Ensure data exists before using it
+    if 'market_data' not in st.session_state:
+        st.session_state.analysis_done = False
+        st.rerun()
+    
     market_data = st.session_state.market_data
     
     # 1. RAG DECISION
@@ -177,7 +200,7 @@ if 'analysis_done' in st.session_state and st.session_state.analysis_done:
             st.success(msg)
         else:
             st.error(msg)
-        st.rerun() # Refresh to update wallet sidebar
+        st.rerun()
     
     # SELL BUTTON
     if c2.button(f"SELL 1 {market_data['name']}"):
@@ -186,4 +209,4 @@ if 'analysis_done' in st.session_state and st.session_state.analysis_done:
             st.success(msg)
         else:
             st.error(msg)
-        st.rerun() # Refresh to update wallet sidebar
+        st.rerun()
